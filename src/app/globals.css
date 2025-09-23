@@ -1,0 +1,397 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Vibrant colorful theme palette */
+  --background: #ffffff;
+  --foreground: #2c3e50;
+  --card: #f1f1f1;
+  --card-foreground: #2c3e50;
+  --popover: #ffffff;
+  --popover-foreground: #2c3e50;
+  --primary: #9b59b6;
+  --primary-foreground: #ffffff;
+  --secondary: #3498db;
+  --secondary-foreground: #ffffff;
+  --muted: #f1c40f;
+  --muted-foreground: #2c3e50;
+  --accent: #e74c3c;
+  --accent-foreground: #ffffff;
+  --destructive: #e74c3c;
+  --destructive-foreground: #ffffff;
+  --border: #dcdcdc;
+  --input: #f1f1f1;
+  --ring: rgba(155, 89, 182, 0.5);
+  --chart-1: #3498db;
+  --chart-2: #2ecc71;
+  --chart-3: #e67e22;
+  --chart-4: #e74c3c;
+  --chart-5: #f1c40f;
+  --radius: 0.5rem;
+  --sidebar: #2c3e50;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #9b59b6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1c40f;
+  --sidebar-accent-foreground: #2c3e50;
+  --sidebar-border: #dcdcdc;
+  --sidebar-ring: rgba(155, 89, 182, 0.5);
+
+  /* Added vibrant gaming colors */
+  --gaming-purple: #9b59b6;
+  --gaming-blue: #3498db;
+  --gaming-red: #e74c3c;
+  --gaming-yellow: #f1c40f;
+  --gaming-green: #2ecc71;
+  --gaming-orange: #e67e22;
+}
+
+.dark {
+  /* Dark mode with vibrant accents */
+  --background: #1a1a2e;
+  --foreground: #ffffff;
+  --card: #16213e;
+  --card-foreground: #ffffff;
+  --popover: #16213e;
+  --popover-foreground: #ffffff;
+  --primary: #bb86fc;
+  --primary-foreground: #000000;
+  --secondary: #03dac6;
+  --secondary-foreground: #000000;
+  --muted: #cf6679;
+  --muted-foreground: #ffffff;
+  --accent: #ff6b6b;
+  --accent-foreground: #ffffff;
+  --destructive: #ff6b6b;
+  --destructive-foreground: #ffffff;
+  --border: #16213e;
+  --input: #16213e;
+  --ring: rgba(187, 134, 252, 0.5);
+  --sidebar: #16213e;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #bb86fc;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: #03dac6;
+  --sidebar-accent-foreground: #000000;
+  --sidebar-border: #16213e;
+  --sidebar-ring: rgba(187, 134, 252, 0.5);
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Added vibrant gaming color utilities */
+  --color-gaming-purple: var(--gaming-purple);
+  --color-gaming-blue: var(--gaming-blue);
+  --color-gaming-red: var(--gaming-red);
+  --color-gaming-yellow: var(--gaming-yellow);
+  --color-gaming-green: var(--gaming-green);
+  --color-gaming-orange: var(--gaming-orange);
+}
+
+/* Updated animation keyframes for colorful effects */
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-5px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(5px);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes floatSlow {
+  0%,
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+  25% {
+    transform: translateY(-3px) translateX(2px);
+  }
+  50% {
+    transform: translateY(-1px) translateX(-1px);
+  }
+  75% {
+    transform: translateY(-4px) translateX(1px);
+  }
+}
+
+/* Added colorful rainbow animation */
+@keyframes rainbow {
+  0% {
+    color: #9b59b6;
+  }
+  16% {
+    color: #3498db;
+  }
+  32% {
+    color: #2ecc71;
+  }
+  48% {
+    color: #f1c40f;
+  }
+  64% {
+    color: #e67e22;
+  }
+  80% {
+    color: #e74c3c;
+  }
+  100% {
+    color: #9b59b6;
+  }
+}
+
+@keyframes colorShift {
+  0% {
+    background: linear-gradient(45deg, #9b59b6, #3498db);
+  }
+  25% {
+    background: linear-gradient(45deg, #3498db, #2ecc71);
+  }
+  50% {
+    background: linear-gradient(45deg, #2ecc71, #f1c40f);
+  }
+  75% {
+    background: linear-gradient(45deg, #f1c40f, #e74c3c);
+  }
+  100% {
+    background: linear-gradient(45deg, #e74c3c, #9b59b6);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    min-height: 100vh;
+  }
+
+  /* Updated vibrant gradient utilities */
+  .gradient-primary {
+    background: linear-gradient(135deg, #9b59b6 0%, #3498db 100%);
+  }
+
+  .gradient-secondary {
+    background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+  }
+
+  .gradient-accent {
+    background: linear-gradient(135deg, #e74c3c 0%, #f1c40f 100%);
+  }
+
+  .gradient-hero {
+    background: linear-gradient(135deg, #9b59b6 0%, #3498db 25%, #2ecc71 50%, #f1c40f 75%, #e74c3c 100%);
+  }
+
+  .gradient-rainbow {
+    background: linear-gradient(45deg, #9b59b6, #3498db, #2ecc71, #f1c40f, #e67e22, #e74c3c);
+    background-size: 400% 400%;
+    animation: colorShift 8s ease-in-out infinite;
+  }
+
+  /* Added colorful glass morphism effects */
+  .glass-effect {
+    background: rgba(155, 89, 182, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(155, 89, 182, 0.2);
+  }
+
+  .glass-effect-blue {
+    background: rgba(52, 152, 219, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(52, 152, 219, 0.2);
+  }
+
+  .glass-effect-green {
+    background: rgba(46, 204, 113, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(46, 204, 113, 0.2);
+  }
+
+  .glass-effect-red {
+    background: rgba(231, 76, 60, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(231, 76, 60, 0.2);
+  }
+
+  /* Updated animation utility classes with colorful effects */
+  .animate-slide-in-left {
+    animation: slideInLeft 0.6s ease-out forwards;
+  }
+
+  .animate-slide-in-right {
+    animation: slideInRight 0.6s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up-delay {
+    animation: slideUp 0.5s ease-out 0.1s forwards;
+    opacity: 0;
+  }
+
+  .animate-slide-up-delay-2 {
+    animation: slideUp 0.5s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+
+  .animate-slide-up-delay-3 {
+    animation: slideUp 0.5s ease-out 0.3s forwards;
+    opacity: 0;
+  }
+
+  .animate-slide-up-delay-4 {
+    animation: slideUp 0.5s ease-out 0.4s forwards;
+    opacity: 0;
+  }
+
+  .animate-slide-up-delay-5 {
+    animation: slideUp 0.5s ease-out 0.5s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in-delay {
+    animation: fadeIn 0.6s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in-delay-2 {
+    animation: fadeIn 0.6s ease-out 0.4s forwards;
+    opacity: 0;
+  }
+
+  .animate-fade-in-delay-3 {
+    animation: fadeIn 0.6s ease-out 0.6s forwards;
+    opacity: 0;
+  }
+
+  .animate-shake {
+    animation: shake 0.6s ease-in-out;
+  }
+
+  .animate-pulse-gentle {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  .animate-float-slow {
+    animation: floatSlow 6s ease-in-out infinite;
+  }
+
+  .animate-rainbow {
+    animation: rainbow 3s ease-in-out infinite;
+  }
+
+  .animate-gradient-shift {
+    animation: colorShift 8s ease-in-out infinite;
+  }
+}
