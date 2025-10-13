@@ -45,24 +45,14 @@ export default function AuthPage() {
     setError("")
     setIsLoginLoading(true)
 
-    
     try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          username: loginData.username, 
-          password: loginData.password
-         }),
-      });
-
-      if (res.ok) {
-        alert("Successfully Login！");
-        // router.push("/dashboard")
+      const success = await login(loginData.username, loginData.password)
+      
+      if (success) {
+        alert("Successfully Login！")
       } else {
-        const data = await res.json();
-        setError(data.error || "Login failed");
-      }      
+        setError("Invalid credentials. Please try again.")
+      }
     } catch (err) {
       setError("Login failed. Please try again.")
     } finally {
@@ -70,23 +60,7 @@ export default function AuthPage() {
     }
   }
 
-  //   async function handleSubmit(e: React.FormEvent) {
-  //   e.preventDefault();
 
-  //   const res = await fetch("/api/login", {
-  //     method: "POST",
-  //     headers: { "Content-Type": "application/json" },
-  //     body: JSON.stringify({ username, password }),
-  //   });
-
-  //   if (res.ok) {
-  //     alert("登录成功！");
-  //     // 这里可以做跳转，比如 router.push("/dashboard")
-  //   } else {
-  //     const data = await res.json();
-  //     setError(data.error || "登录失败");
-  //   }
-  // }
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,34 +74,13 @@ export default function AuthPage() {
     setIsSignupLoading(true)
 
     try {
-        const res = await fetch("/api/register", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ 
-            username: signupData.username, 
-            password: signupData.password, 
-            email: signupData.email }),
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setError(data.error || "Registration failed");
-        } else {
-          alert("Successfully Sign Up！ Your user ID: " + data.userId);
-
-          // //setSuccess("Registration successful! Your user ID: " + data.userId);
-          // setSignupData({
-          //   username: "",
-          //   email: "",
-          //   password: "",
-          //   confirmPassword: "",
-          // })
-          // router.push("/dashboard")
-
-        }
+      const success = await signup(signupData.username, signupData.email, signupData.password)
+      
+      if (success) {
+        alert("Successfully Sign Up！")
+      } else {
+        setError("Registration failed. Username or email may already exist.")
+      }
     } catch (err) {
       setError("Signup failed. Please try again.")
     } finally {
@@ -154,14 +107,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-purple-500 via-pink/70 to-orange-500 flex items-start justify-center p-4 pt-16 relative overflow-hidden">
-      <div className="absolute top-4 left-4 z-20">
-        <Link href="/">
-          <Button variant="outline" size="sm" className="hover:scale-105 transition-transform bg-transparent">
-            ← Back to Home
-          </Button>
-        </Link>
-      </div>
+    <div className="min-h-screen bg-gradient-to-r from-primary via-secondary to-accent flex items-start justify-center p-4 pt-16 relative overflow-hidden">
       
       {/* This is the wave background */}
       {/* <div className="absolute bottom-0 left-0 w-full z-0">

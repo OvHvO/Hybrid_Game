@@ -4,79 +4,78 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Vibrant colorful theme palette */
+  /* New earthy color palette */
   --background: #ffffff;
-  --foreground: #2c3e50;
-  --card: #f1f1f1;
-  --card-foreground: #2c3e50;
+  --foreground: #264653;
+  --card: #f8f9fa;
+  --card-foreground: #264653;
   --popover: #ffffff;
-  --popover-foreground: #2c3e50;
-  --primary: #9b59b6;
+  --popover-foreground: #264653;
+  --primary: #2a9d8f;
   --primary-foreground: #ffffff;
-  --secondary: #3498db;
-  --secondary-foreground: #ffffff;
-  --muted: #f1c40f;
-  --muted-foreground: #2c3e50;
-  --accent: #e74c3c;
+  --secondary: #e9c46a;
+  --secondary-foreground: #264653;
+  --muted: #f4a261;
+  --muted-foreground: #264653;
+  --accent: #f4a261;
   --accent-foreground: #ffffff;
-  --destructive: #e74c3c;
+  --destructive: #e76f51;
   --destructive-foreground: #ffffff;
-  --border: #dcdcdc;
-  --input: #f1f1f1;
-  --ring: rgba(155, 89, 182, 0.5);
-  --chart-1: #3498db;
-  --chart-2: #2ecc71;
-  --chart-3: #e67e22;
-  --chart-4: #e74c3c;
-  --chart-5: #f1c40f;
+  --border: #e9ecef;
+  --input: #f8f9fa;
+  --ring: rgba(42, 157, 143, 0.5);
+  --chart-1: #2a9d8f;
+  --chart-2: #e9c46a;
+  --chart-3: #f4a261;
+  --chart-4: #e76f51;
+  --chart-5: #264653;
   --radius: 0.5rem;
-  --sidebar: #2c3e50;
+  --sidebar: #264653;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #9b59b6;
+  --sidebar-primary: #2a9d8f;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f1c40f;
-  --sidebar-accent-foreground: #2c3e50;
-  --sidebar-border: #dcdcdc;
-  --sidebar-ring: rgba(155, 89, 182, 0.5);
+  --sidebar-accent: #e9c46a;
+  --sidebar-accent-foreground: #264653;
+  --sidebar-border: #e9ecef;
+  --sidebar-ring: rgba(42, 157, 143, 0.5);
 
-  /* Added vibrant gaming colors */
-  --gaming-purple: #9b59b6;
-  --gaming-blue: #3498db;
-  --gaming-red: #e74c3c;
-  --gaming-yellow: #f1c40f;
-  --gaming-green: #2ecc71;
-  --gaming-orange: #e67e22;
+  /* New earthy gaming colors */
+  --gaming-primary: #2a9d8f;
+  --gaming-secondary: #e9c46a;
+  --gaming-accent: #f4a261;
+  --gaming-destructive: #e76f51;
+  --gaming-dark: #264653;
 }
 
 .dark {
-  /* Dark mode with vibrant accents */
-  --background: #1a1a2e;
+  /* Dark mode with earthy accents */
+  --background: #1a1a1a;
   --foreground: #ffffff;
-  --card: #16213e;
+  --card: #264653;
   --card-foreground: #ffffff;
-  --popover: #16213e;
+  --popover: #264653;
   --popover-foreground: #ffffff;
-  --primary: #bb86fc;
-  --primary-foreground: #000000;
-  --secondary: #03dac6;
-  --secondary-foreground: #000000;
-  --muted: #cf6679;
+  --primary: #2a9d8f;
+  --primary-foreground: #ffffff;
+  --secondary: #e9c46a;
+  --secondary-foreground: #264653;
+  --muted: #f4a261;
   --muted-foreground: #ffffff;
-  --accent: #ff6b6b;
-  --accent-foreground: #ffffff;
-  --destructive: #ff6b6b;
+  --accent: #f4a261;
+  --accent-foreground: #264653;
+  --destructive: #e76f51;
   --destructive-foreground: #ffffff;
-  --border: #16213e;
-  --input: #16213e;
-  --ring: rgba(187, 134, 252, 0.5);
-  --sidebar: #16213e;
+  --border: #264653;
+  --input: #264653;
+  --ring: rgba(42, 157, 143, 0.5);
+  --sidebar: #264653;
   --sidebar-foreground: #ffffff;
-  --sidebar-primary: #bb86fc;
-  --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #03dac6;
-  --sidebar-accent-foreground: #000000;
-  --sidebar-border: #16213e;
-  --sidebar-ring: rgba(187, 134, 252, 0.5);
+  --sidebar-primary: #2a9d8f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e9c46a;
+  --sidebar-accent-foreground: #264653;
+  --sidebar-border: #264653;
+  --sidebar-ring: rgba(42, 157, 143, 0.5);
 }
 
 @theme inline {
@@ -119,13 +118,12 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Added vibrant gaming color utilities */
-  --color-gaming-purple: var(--gaming-purple);
-  --color-gaming-blue: var(--gaming-blue);
-  --color-gaming-red: var(--gaming-red);
-  --color-gaming-yellow: var(--gaming-yellow);
-  --color-gaming-green: var(--gaming-green);
-  --color-gaming-orange: var(--gaming-orange);
+  /* Added earthy gaming color utilities */
+  --color-gaming-primary: var(--gaming-primary);
+  --color-gaming-secondary: var(--gaming-secondary);
+  --color-gaming-accent: var(--gaming-accent);
+  --color-gaming-destructive: var(--gaming-destructive);
+  --color-gaming-dark: var(--gaming-dark);
 }
 
 /* Updated animation keyframes for colorful effects */
