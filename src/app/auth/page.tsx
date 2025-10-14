@@ -12,6 +12,7 @@ import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import Link from "next/link"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function AuthPage() {
   const { login, signup, isAuthenticated, isLoading } = useAuth()
@@ -108,6 +109,11 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-primary via-secondary to-accent flex items-start justify-center p-4 pt-16 relative overflow-hidden">
+      
+      {/* Theme Toggle */}
+      <div className="absolute top-4 right-4 z-50">
+        <ThemeToggle />
+      </div>
       
       {/* This is the wave background */}
       {/* <div className="absolute bottom-0 left-0 w-full z-0">

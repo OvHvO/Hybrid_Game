@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, execute } from "@/lib/db";
+import { sendRoomUpdate, broadcastGameStart } from "../../../../../pages/api/websocket";
 
 type Room = {
   room_id: number;
@@ -12,10 +13,11 @@ type Room = {
 // GET /api/rooms/[id] - Get room by ID with players
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const roomId = parseInt(params.id);
+    const { id } = await params;
+    const roomId = parseInt(id);
 
     if (isNaN(roomId)) {
       return NextResponse.json(
@@ -81,10 +83,11 @@ export async function GET(
 // PUT /api/rooms/[id] - Update room status
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const roomId = parseInt(params.id);
+    const { id } = await params;
+    const roomId = parseInt(id);
     const { status, owner_id } = await request.json();
 
     if (isNaN(roomId)) {
@@ -117,7 +120,7 @@ export async function PUT(
     const room = rooms[0];
 
     // Only room owner can update room status
-    if (owner_id && room.owner_id !== owner_id) {
+    if (owner_id && room.owner_id != owner_id) {
       return NextResponse.json(
         { error: "Only room owner can update room status" },
         { status: 403 }
@@ -129,6 +132,15 @@ export async function PUT(
       "UPDATE rooms SET status = ? WHERE room_id = ?",
       [status, roomId]
     );
+
+    // Send WebSocket updates
+    if (status === 'playing') {
+      // Broadcast game start to all players in the room
+      await broadcastGameStart(roomId.toString());
+    } else {
+      // Send regular room update
+      await sendRoomUpdate(roomId.toString());
+    }
 
     return NextResponse.json({
       message: "Room status updated successfully",
@@ -149,10 +161,11 @@ export async function PUT(
 // DELETE /api/rooms/[id] - Delete room
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const roomId = parseInt(params.id);
+    const { id } = await params;
+    const roomId = parseInt(id);
     const { searchParams } = new URL(request.url);
     const ownerId = parseInt(searchParams.get('owner_id') || '0');
 

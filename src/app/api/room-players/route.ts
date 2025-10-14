@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query, execute } from "@/lib/db";
+import { sendRoomUpdate } from "../../../../pages/api/websocket";
 
 type RoomPlayer = {
   id: number;
@@ -127,6 +128,9 @@ export async function POST(request: NextRequest) {
     );
 
     const roomPlayerId = (result as any).insertId;
+
+    // Send WebSocket update to all clients in the room
+    await sendRoomUpdate(room_id.toString());
 
     return NextResponse.json({
       message: "Successfully joined room",

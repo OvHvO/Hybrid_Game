@@ -4,10 +4,11 @@ import { query } from "@/lib/db";
 // GET /api/rooms/[id]/join - Check if room is joinable and get room info
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const roomId = parseInt(params.id);
+    const { id } = await params;
+    const roomId = parseInt(id);
 
     if (isNaN(roomId)) {
       return NextResponse.json(
@@ -44,11 +45,14 @@ export async function GET(
     }
 
     const room = rooms[0];
+    const MAX_PLAYERS = 4;
 
     return NextResponse.json({
       room: {
         ...room,
-        joinable: room.status === 'waiting'
+        joinable: room.status === 'waiting' && room.player_count < MAX_PLAYERS,
+        max_players: MAX_PLAYERS,
+        is_full: room.player_count >= MAX_PLAYERS
       }
     });
   } catch (error) {
@@ -63,10 +67,11 @@ export async function GET(
 // POST /api/rooms/[id]/join - Join room by room ID
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const roomId = parseInt(params.id);
+    const { id } = await params;
+    const roomId = parseInt(id);
     const { user_id } = await request.json();
 
     if (isNaN(roomId)) {
@@ -79,6 +84,59 @@ export async function POST(
     if (!user_id) {
       return NextResponse.json(
         { error: "User ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Check room capacity before joining
+    const MAX_PLAYERS = 4;
+    
+    // Get current player count
+    const roomCheck = await query(
+      `
+      SELECT 
+        r.status,
+        COUNT(rp.user_id) as current_players
+      FROM rooms r
+      LEFT JOIN room_players rp ON r.room_id = rp.room_id
+      WHERE r.room_id = ?
+      GROUP BY r.room_id, r.status
+      `,
+      [roomId]
+    );
+
+    if (roomCheck.length === 0) {
+      return NextResponse.json(
+        { error: "Room not found" },
+        { status: 404 }
+      );
+    }
+
+    const room = roomCheck[0];
+
+    if (room.status !== 'waiting') {
+      return NextResponse.json(
+        { error: "Room is not accepting new players" },
+        { status: 400 }
+      );
+    }
+
+    if (room.current_players >= MAX_PLAYERS) {
+      return NextResponse.json(
+        { error: "Room is full (maximum 4 players)" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user is already in the room
+    const existingPlayer = await query(
+      "SELECT id FROM room_players WHERE room_id = ? AND user_id = ?",
+      [roomId, user_id]
+    );
+
+    if (existingPlayer.length > 0) {
+      return NextResponse.json(
+        { error: "User is already in this room" },
         { status: 400 }
       );
     }

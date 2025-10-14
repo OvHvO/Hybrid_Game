@@ -4,10 +4,11 @@ import { query, execute } from "@/lib/db";
 // DELETE /api/room-players/[id] - Leave a room
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const roomPlayerId = parseInt(params.id);
+    const { id } = await params;
+    const roomPlayerId = parseInt(id);
 
     if (isNaN(roomPlayerId)) {
       return NextResponse.json(

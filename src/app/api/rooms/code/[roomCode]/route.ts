@@ -4,10 +4,11 @@ import { query } from "@/lib/db";
 // GET /api/rooms/code/[roomCode] - Find room by room code
 export async function GET(
   request: NextRequest,
-  { params }: { params: { roomCode: string } }
+  { params }: { params: Promise<{ roomCode: string }> }
 ) {
   try {
-    const roomCode = params.roomCode.toUpperCase();
+    const { roomCode: code } = await params;
+    const roomCode = code.toUpperCase();
 
     if (!roomCode || roomCode.length < 4) {
       return NextResponse.json(

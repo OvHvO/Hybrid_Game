@@ -9,6 +9,7 @@ import { Search, Users, Clock, Play } from "lucide-react"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 
 
@@ -162,6 +163,7 @@ export default function DashboardPage() {
                 <p className="text-sm sm:text-base text-muted-foreground">Welcome back, {user?.username}!</p>
               </div>
               <div className="flex items-center gap-2 sm:gap-4">
+                <ThemeToggle />
                 <Button
                   variant="outline"
                   size="sm"

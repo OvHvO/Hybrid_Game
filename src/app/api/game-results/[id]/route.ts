@@ -13,10 +13,11 @@ type GameResult = {
 // GET /api/game-results/[id] - Get specific game result
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const resultId = parseInt(params.id);
+    const { id } = await params;
+    const resultId = parseInt(id);
 
     if (isNaN(resultId)) {
       return NextResponse.json(
@@ -59,10 +60,11 @@ export async function GET(
 // PUT /api/game-results/[id] - Update game result
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const resultId = parseInt(params.id);
+    const { id } = await params;
+    const resultId = parseInt(id);
     const { score, result } = await request.json();
 
     if (isNaN(resultId)) {
@@ -126,10 +128,11 @@ export async function PUT(
 // DELETE /api/game-results/[id] - Delete game result
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const resultId = parseInt(params.id);
+    const { id } = await params;
+    const resultId = parseInt(id);
 
     if (isNaN(resultId)) {
       return NextResponse.json(
