@@ -14,15 +14,15 @@ html {
 
 :root {
   /* New earthy color palette */
-  --background: #ffffff;
+  --background: #f4f1de;
   --foreground: #264653;
   --card: #f8f9fa;
   --card-foreground: #264653;
   --popover: #ffffff;
   --popover-foreground: #264653;
-  --primary: #2a9d8f;
+  --primary: #001d3d;
   --primary-foreground: #ffffff;
-  --secondary: #e9c46a;
+  --secondary: #f2cc8f;
   --secondary-foreground: #264653;
   --muted: #f4a261;
   --muted-foreground: #264653;
@@ -60,11 +60,11 @@ html {
   /* Dark mode with earthy accents */
   --background: #1a1a1a;
   --foreground: #ffffff;
-  --card: #264653;
+  --card: #564256;
   --card-foreground: #ffffff;
   --popover: #264653;
   --popover-foreground: #ffffff;
-  --primary: #2a9d8f;
+  --primary: #c6ac8f;
   --primary-foreground: #ffffff;
   --secondary: #e9c46a;
   --secondary-foreground: #264653;

@@ -58,7 +58,21 @@ export async function POST(
       );
 
       if (otherPlayers.length > 0) {
-        // Transfer ownership to the first player who joined
+        // If game is in progress, end the game and delete the room
+        // Owner leaving an active game means the game should end
+        if (roomPlayer.room_status === 'playing') {
+          console.log(`🎮 Owner leaving active game - deleting room ${roomId}`)
+          await execute("DELETE FROM room_players WHERE room_id = ?", [roomId]);
+          await execute("DELETE FROM rooms WHERE room_id = ?", [roomId]);
+
+          return NextResponse.json({ 
+            message: "Game ended. Room deleted as owner left.",
+            room_deleted: true,
+            game_ended: true
+          });
+        }
+        
+        // If room is just waiting, transfer ownership to the first player who joined
         const newOwner = otherPlayers[0];
         await execute(
           "UPDATE rooms SET owner_id = ? WHERE room_id = ?",

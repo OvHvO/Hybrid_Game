@@ -50,8 +50,12 @@ export default function DashboardPage() {
       setShowInputForm(false) 
       setIsCreating(false) 
 
-      // Navigate to the created room using the room_id
-      router.push(`/room/${data.room.room_id}`)
+      // Add a small delay to ensure database transaction is committed
+      // This helps prevent race conditions with authorization checks
+      setTimeout(() => {
+        console.log(`Navigating to room: ${data.room.room_id}`)
+        router.push(`/room/${data.room.room_id}`)
+      }, 200)
     } catch (error) {
       console.error('Error creating room:', error)
       setIsCreating(false)

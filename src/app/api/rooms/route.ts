@@ -141,11 +141,13 @@ export async function POST(request: NextRequest) {
 
     const roomId = (result as any).insertId;
 
-    // Add owner to room_players
+    // Add owner to room_players - This should be atomic with the above
     await execute(
       "INSERT INTO room_players (room_id, user_id) VALUES (?, ?)",
       [roomId, owner_id]
     );
+
+    console.log(`Room created successfully: ID=${roomId}, Code=${roomCode}, Owner=${owner_id}`);
 
     return NextResponse.json({
       message: "Room created successfully",

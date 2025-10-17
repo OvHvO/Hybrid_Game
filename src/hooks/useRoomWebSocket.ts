@@ -34,6 +34,7 @@ interface UseRoomWebSocketReturn {
   error: string | null
   sendMessage: (message: any) => void
   reconnect: () => void
+  disconnect: () => void
 }
 
 export function useRoomWebSocket(roomId: string): UseRoomWebSocketReturn {
@@ -43,6 +44,11 @@ export function useRoomWebSocket(roomId: string): UseRoomWebSocketReturn {
   const [isConnecting, setIsConnecting] = useState(false)
   const [isPolling, setIsPolling] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Add hook instance ID for debugging
+  const hookId = useRef(Math.random().toString(36).substr(2, 9))
+  
+  console.log(`🎯 useRoomWebSocket hook initialized for room ${roomId} (Hook ID: ${hookId.current})`)
   
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -52,56 +58,100 @@ export function useRoomWebSocket(roomId: string): UseRoomWebSocketReturn {
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const isPageVisible = useRef(true)
 
-  // Fallback polling function for when WebSocket is not available
-  const startPolling = useCallback(async () => {
-    console.log(`🔄 Starting polling for room ${roomId}`)
-    
-    if (pollIntervalRef.current) {
-      console.log(`⚠️  Clearing existing polling interval for room ${roomId}`)
-      clearInterval(pollIntervalRef.current)
+  const fetchRoomData = useCallback(async () => {
+    // Don't fetch if polling has been stopped
+    if (!pollIntervalRef.current && !isPolling) {
+      console.log(`⏹️  [${hookId.current}] Skipping fetch - polling is stopped`)
+      return
     }
 
-    // Initial fetch
-    await fetchRoomData()
-    setIsConnected(true) // Mark as "connected" for UI purposes
-
-    // Start polling every 10 seconds (reduced frequency to minimize logs)
-    // Only poll when page is visible to reduce unnecessary requests
-    pollIntervalRef.current = setInterval(async () => {
-      if (isPageVisible.current) {
-        await fetchRoomData()
-      }
-    }, 5000)
-  }, [roomId])
-
-  const fetchRoomData = useCallback(async () => {
     try {
-      const roomResponse = await fetch(`/api/rooms/${roomId}`)
-      if (!roomResponse.ok) {
-        throw new Error('Room not found')
+      console.log(`📡 [${hookId.current}] Fetching room data for room ${roomId}`)
+      
+      const response = await fetch(`/api/rooms/${roomId}/state`);
+
+      if (!response.ok) {
+        // Room not found (404) or other error - stop polling immediately
+        console.log(`⚠️  [${hookId.current}] Room ${roomId} not found (${response.status}). Stopping polling.`)
+        
+        // Stop polling immediately
+        if (pollIntervalRef.current) {
+          console.log(`🛑 [${hookId.current}] Clearing polling interval`)
+          clearInterval(pollIntervalRef.current)
+          pollIntervalRef.current = null
+        }
+        
+        setIsPolling(false)
+        setIsConnected(false)
+        setError('Room not found or has been closed')
+        return
       }
       
-      const roomData = await roomResponse.json()
+      const roomData = await response.json()
       
       // Check if room status changed to 'playing' - redirect all players to game
-      if (roomData.room.status === 'playing' && room?.status === 'waiting') {
-        console.log('Game started! Redirecting to game page...')
+      // This ensures synchronized game start for all players
+      if (roomData.room.status === 'playing' && room?.status !== 'playing') {
+        console.log(`🎮 [${hookId.current}] Game started! Redirecting all players to game page...`)
+        
+        // Stop polling before redirect
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current)
+          pollIntervalRef.current = null
+        }
+        
+        // Immediate redirect for synchronized start
         router.push(`/game/${roomId}`)
         return
       }
       
       setRoom(roomData.room)
+      setPlayers(roomData.players || [])
       
-      const playersResponse = await fetch(`/api/room-players?room_id=${roomId}`)
-      if (playersResponse.ok) {
-        const playersData = await playersResponse.json()
-        setPlayers(playersData.roomPlayers || [])
-      }
     } catch (err) {
-      console.error('Polling error:', err)
+      console.error(`❌ [${hookId.current}] Polling error for room ${roomId}:`, err)
+      
+      // Stop polling on error to prevent continuous failed requests
+      if (pollIntervalRef.current) {
+        console.log(`🛑 [${hookId.current}] Clearing polling interval due to error`)
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+      
+      setIsPolling(false)
+      setIsConnected(false)
       setError(err instanceof Error ? err.message : 'Failed to load room')
     }
   }, [roomId, room?.status, router])
+
+  // Fallback polling function for when WebSocket is not available
+  const startPolling = useCallback(async () => {
+    console.log(`🔄 [${hookId.current}] Starting polling for room ${roomId}`)
+    
+    if (pollIntervalRef.current) {
+      console.log(`⚠️  [${hookId.current}] Clearing existing polling interval for room ${roomId}`)
+      clearInterval(pollIntervalRef.current)
+    }
+
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Initial fetch
+    await fetchRoomData()
+    setIsConnected(true) // Mark as "connected" for UI purposes
+
+    // Start polling every 2 seconds for faster game start synchronization
+    // Only poll when page is visible to reduce unnecessary requests
+    pollIntervalRef.current = setInterval(async () => {
+      if (isPageVisible.current) {
+        console.log(`📡 [${hookId.current}] Polling room ${roomId} for updates`)
+        await fetchRoomData()
+      } else {
+        console.log(`⏸️  [${hookId.current}] Skipping poll for room ${roomId} - page not visible`)
+      }
+    }, 2000)
+    
+    setIsPolling(true)
+  }, [roomId, fetchRoomData]);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return
@@ -145,7 +195,7 @@ export function useRoomWebSocket(roomId: string): UseRoomWebSocketReturn {
                 ws.send(JSON.stringify({
                   type: 'join_room',
                   roomId: roomId
-                }))
+                })) 
               }
 
               ws.onmessage = (event) => {
@@ -237,7 +287,7 @@ export function useRoomWebSocket(roomId: string): UseRoomWebSocketReturn {
   }, [roomId, router])
 
   const disconnect = useCallback(() => {
-    console.log(`🛑 Disconnecting from room polling/WebSocket`)
+    console.log(`🛑 [${hookId.current}] Disconnecting from room ${roomId} polling/WebSocket`)
     
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
@@ -245,7 +295,7 @@ export function useRoomWebSocket(roomId: string): UseRoomWebSocketReturn {
     }
     
     if (pollIntervalRef.current) {
-      console.log(`🛑 Clearing polling interval`)
+      console.log(`🛑 [${hookId.current}] Clearing polling interval for room ${roomId}`)
       clearInterval(pollIntervalRef.current)
       pollIntervalRef.current = null
     }
@@ -257,7 +307,8 @@ export function useRoomWebSocket(roomId: string): UseRoomWebSocketReturn {
     
     setIsConnected(false)
     setIsConnecting(false)
-  }, [])
+    setIsPolling(false)
+  }, [roomId])
 
   const sendMessage = useCallback((message: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -302,12 +353,24 @@ export function useRoomWebSocket(roomId: string): UseRoomWebSocketReturn {
     }
   }, [roomId, connect, disconnect])
 
-  // Cleanup on unmount
+  // Cleanup on unmount  
   useEffect(() => {
     return () => {
+      console.log(`🔥 [${hookId.current}] Hook unmounting - cleaning up room ${roomId}`)
       disconnect()
     }
-  }, [disconnect])
+  }, [disconnect, roomId])
+
+  // Additional cleanup when roomId changes
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        console.log(`🧹 [${hookId.current}] Cleaning up polling on roomId change`)
+        clearInterval(pollIntervalRef.current)
+        pollIntervalRef.current = null
+      }
+    }
+  }, [roomId])
 
   return {
     room,
@@ -317,6 +380,7 @@ export function useRoomWebSocket(roomId: string): UseRoomWebSocketReturn {
     isPolling,
     error,
     sendMessage,
-    reconnect
+    reconnect,
+    disconnect
   }
 }

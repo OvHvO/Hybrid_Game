@@ -32,6 +32,57 @@ export default function GameRoomPage() {
   const { user } = useAuth()
   
   const roomId = params?.id as string
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
+  const [authError, setAuthError] = useState<string | null>(null)
+
+  // Check room access authorization with retry mechanism
+  useEffect(() => {
+    const checkRoomAccess = async (retryCount = 0) => {
+      if (!user?.id || !roomId) return
+
+      console.log(`Checking room access for user ${user.id} in room ${roomId} (attempt ${retryCount + 1})`)
+
+      try {
+        const response = await fetch(`/api/rooms/${roomId}/membership?user_id=${user.id}`)
+        const data = await response.json()
+        
+        console.log('Room access response:', data)
+        
+        if (data.authorized) {
+          console.log('User authorized for room access')
+          setIsAuthorized(true)
+        } else {
+          // If not authorized and this is the first attempt, try once more after a delay
+          // This handles potential race conditions during room creation
+          if (retryCount === 0) {
+            console.log('First authorization failed, retrying in 500ms...')
+            setTimeout(() => checkRoomAccess(1), 500)
+            return
+          }
+          
+          console.log('User NOT authorized for room access:', data.message)
+          setIsAuthorized(false)
+          setAuthError(data.message || 'You are not authorized to access this room')
+        }
+      } catch (error) {
+        console.error('Error checking room access:', error)
+        
+        // Retry once on network error
+        if (retryCount === 0) {
+          setTimeout(() => checkRoomAccess(1), 500)
+          return
+        }
+        
+        setIsAuthorized(false)
+        setAuthError('Failed to verify room access')
+      }
+    }
+
+    // Only check authorization if user is loaded
+    if (user) {
+      checkRoomAccess()
+    }
+  }, [user, roomId])
 
   // Early return if no room ID
   if (!roomId) {
@@ -63,12 +114,22 @@ export default function GameRoomPage() {
     isConnecting,
     isPolling,
     error: wsError, 
-    reconnect 
+    reconnect,
+    disconnect
   } = useRoomWebSocket(roomId)
   
   const [leaving, setLeaving] = useState(false)
   const [startingGame, setStartingGame] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [gameIsStarting, setGameIsStarting] = useState(false)
+
+  // Detect when game status changes to 'playing' - show transition UI
+  useEffect(() => {
+    if (room?.status === 'playing' && !gameIsStarting) {
+      console.log('🎮 Game status detected as playing - showing transition UI')
+      setGameIsStarting(true)
+    }
+  }, [room?.status, gameIsStarting])
 
   // Handle WebSocket errors (but not polling mode)
   useEffect(() => {
@@ -83,6 +144,11 @@ export default function GameRoomPage() {
     if (!user?.id) return
     
     setLeaving(true)
+    
+    // Stop polling/websocket immediately before leaving
+    console.log('🛑 User leaving room - disconnecting polling/WebSocket')
+    disconnect()
+    
     try {
       const response = await fetch(`/api/rooms/${roomId}/leave`, {
         method: 'POST',
@@ -117,44 +183,86 @@ export default function GameRoomPage() {
     if (!user?.id || !room?.room_id) return
     
     setStartingGame(true)
+    console.log(`🎮 Owner ${user.id} starting game for room ${roomId}`)
+    
     try {
-      // Update room status to 'playing' 
-      const response = await fetch(`/api/rooms/${roomId}`, {
-        method: 'PUT',
+      // Use dedicated start game endpoint for synchronized game start
+      const response = await fetch(`/api/rooms/${roomId}/start`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          status: 'playing',
           owner_id: user.id
         })
       })
       
       if (response.ok) {
-        // Redirect to game page
+        const result = await response.json()
+        console.log('✅ Game started successfully, redirecting all players...')
+        
+        // The owner redirects immediately
+        // Other players will be redirected via polling when they detect status change
         router.push(`/game/${roomId}`)
       } else {
         const errorData = await response.json()
-        alert(errorData.error || 'Failed to start game')
+        console.error('❌ Failed to start game - Status:', response.status, 'Error:', errorData)
+        alert(`Failed to start game: ${errorData.error || 'Unknown error'}`)
+        setStartingGame(false)
       }
     } catch (error) {
       console.error('Failed to start game:', error)
       alert('Failed to start game. Please try again.')
-    } finally {
       setStartingGame(false)
     }
+    // Note: Don't set setStartingGame(false) on success - let the redirect happen
   }
 
-  if (isConnecting || (!room && !error && !wsError)) {
+  // Show loading while checking authorization or connecting
+  if (isAuthorized === null || isConnecting || (!room && !error && !wsError && isAuthorized)) {
     return (
       <ProtectedRoute>
         <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
             <p className="mt-4 text-muted-foreground">
-              {isConnecting ? 'Connecting to room...' : 'Loading room...'}
+              {isAuthorized === null 
+                ? 'Verifying room access...' 
+                : isConnecting 
+                  ? 'Connecting to room...' 
+                  : 'Loading room...'
+              }
             </p>
           </div>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+
+  // Show unauthorized access error
+  if (isAuthorized === false) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <Card className="max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="text-center text-destructive">Access Denied</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-muted-foreground">
+                {authError || 'You do not have permission to access this room'}
+              </p>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  You can only access rooms that you have joined.
+                </p>
+                <Button onClick={() => router.push('/dashboard')} className="w-full">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </ProtectedRoute>
     )
@@ -183,10 +291,27 @@ export default function GameRoomPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-4 sm:py-8 max-w-7xl">
-          {/* Header - Stack on mobile, flex on larger screens */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
+      <div className="min-h-screen bg-background relative">
+        {/* Game Starting Overlay - Shown to all players when game starts */}
+        {gameIsStarting && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+            <Card className="max-w-md mx-4 border-2 border-primary animate-pulse">
+              <CardContent className="pt-6 text-center space-y-4">
+                <div className="w-16 h-16 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <h2 className="text-2xl font-bold text-primary">🎮 Game Starting!</h2>
+                <p className="text-muted-foreground">
+                  All players are being redirected to the game...
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Please wait while we set everything up
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        <div className="container mx-auto px-4 py-4 sm:py-8">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 sm:mb-8">
             <Button
               variant="outline"
               onClick={() => router.push('/dashboard')}
@@ -199,7 +324,7 @@ export default function GameRoomPage() {
             <div className="text-center flex-1">
               <h1 className="text-xl sm:text-2xl font-bold">Room {room?.room_code}</h1>
               <div className="flex items-center justify-center gap-2">
-                <Badge variant={room?.status === 'waiting' ? 'default' : 'secondary'}>
+                <Badge variant={room?.status == 'waiting' ? 'default' : 'secondary'}>
                   {room?.status === 'waiting' ? 'Waiting' : 'Active'}
                 </Badge>
                 <div className="flex items-center gap-1">
@@ -239,20 +364,18 @@ export default function GameRoomPage() {
             </Button>
           </div>
 
-          {/* Main content - Flex layout for responsive design */}
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
-            {/* Room Information Card - Full width on mobile, half on desktop */}
-            <Card className="flex-1 lg:flex-none lg:w-1/2">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            <Card className="flex-1 lg:max-w-md">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="mr-2 h-5 w-5" />
+                <CardTitle className="flex items-center text-base sm:text-lg">
+                  <Users className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                   Room Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Room Code</label>
-                  <p className="text-2xl font-mono font-bold">{room?.room_code}</p>
+                  <p className="text-xl sm:text-2xl font-mono font-bold">{room?.room_code}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Owner</label>
@@ -276,7 +399,7 @@ export default function GameRoomPage() {
                     DEBUG - User ID: {user?.id}, Owner ID: {room?.owner_id}, Room Status: {room?.status}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Is Owner: {user?.id == room?.owner_id ? 'YES' : 'NO'}, Is Waiting: {room?.status === 'waiting' ? 'YES' : 'NO'}
+                    Is Owner: {user?.id == room?.owner_id ? 'YES' : 'NO'}, Is Waiting: {room?.status == 'waiting' ? 'YES' : 'NO'}
                   </p>
                 </div>
 
@@ -285,18 +408,20 @@ export default function GameRoomPage() {
                   <div className="pt-4 border-t space-y-3">
                     <Button
                       onClick={handleStartGame}
-                      disabled={startingGame || players.length < 4}
-                      className={`w-full ${players.length >= 4 ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse' : ''}`}
+                      disabled={startingGame || players.length < 2}
+                      className={`w-full text-sm sm:text-base ${players.length >= 2 ? 'bg-green-600 hover:bg-green-700 text-white animate-pulse' : ''}`}
                       size="lg"
                       variant={players.length >= 4 ? "default" : "secondary"}
                     >
-                      <Play className="mr-2 h-5 w-5" />
-                      {startingGame 
-                        ? 'Starting Game - All Players Will Be Redirected...' 
-                        : players.length < 4 
-                          ? `Need 4 players to start (${players.length}/4)` 
-                          : `🎮 START GAME NOW! (${players.length} players ready)`
-                      }
+                      <Play className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                      <span className="text-center">
+                        {startingGame 
+                          ? 'Starting Game - All Players Will Be Redirected...' 
+                          : players.length < 4 
+                            ? `Need 4 players to start (${players.length}/4)` 
+                            : `🎮 START GAME NOW! (${players.length} players ready)`
+                        }
+                      </span>
                     </Button>
                     
                     {players.length < 4 && (
@@ -355,7 +480,7 @@ export default function GameRoomPage() {
                           ? 'text-green-800 dark:text-green-200 font-medium' 
                           : 'text-muted-foreground'
                       }`}>
-                        {players.length >= 4 
+                        {players.length >= 4
                           ? `🎮 Room is full! Waiting for ${room?.owner_username} to start the game...`
                           : `Waiting for ${room?.owner_username} to start the game...`
                         }
@@ -376,13 +501,12 @@ export default function GameRoomPage() {
               </CardContent>
             </Card>
 
-            {/* Players Card - Full width on mobile, half on desktop */}
-            <Card className="flex-1 lg:flex-none lg:w-1/2">
+            <Card className="flex-1">
               <CardHeader>
-                <CardTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <span className="text-base sm:text-lg">Players ({players.length}/4)</span>
                   {players.length === 4 && (
-                    <Badge variant="default" className="bg-green-500">
+                    <Badge variant="default" className="bg-green-500 text-xs sm:text-sm">
                       Full Room!
                     </Badge>
                   )}
@@ -393,16 +517,16 @@ export default function GameRoomPage() {
                   {players.map((player) => (
                     <div 
                       key={player.user_id}
-                      className="flex items-center justify-between p-3 rounded-lg border transition-all duration-200 hover:bg-muted/50"
+                      className="flex items-center justify-between p-2 sm:p-3 rounded-lg border transition-all duration-200 hover:bg-muted/50"
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-bold">
+                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs sm:text-sm font-bold flex-shrink-0">
                           {player.username.charAt(0).toUpperCase()}
                         </div>
-                        <span className="font-medium">{player.username}</span>
+                        <span className="font-medium text-sm sm:text-base truncate">{player.username}</span>
                       </div>
                       {player.user_id === room?.owner_id && (
-                        <Badge variant="secondary">Owner</Badge>
+                        <Badge variant="secondary" className="text-xs flex-shrink-0">Owner</Badge>
                       )}
                     </div>
                   ))}
@@ -411,13 +535,13 @@ export default function GameRoomPage() {
                   {Array.from({ length: 4 - players.length }).map((_, index) => (
                     <div 
                       key={`empty-${index}`}
-                      className="flex items-center justify-between p-3 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20"
+                      className="flex items-center justify-between p-2 sm:p-3 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/20"
                     >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center text-muted-foreground text-sm">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-muted rounded-full flex items-center justify-center text-muted-foreground text-xs sm:text-sm flex-shrink-0">
                           ?
                         </div>
-                        <span className="text-muted-foreground">Waiting for player...</span>
+                        <span className="text-muted-foreground text-sm sm:text-base">Waiting for player...</span>
                       </div>
                     </div>
                   ))}

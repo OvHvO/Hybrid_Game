@@ -18,6 +18,11 @@ export async function GET(
   try {
     const { id } = await params;
     const roomId = parseInt(id);
+    
+    // Debug: Log who's making the request
+    const userAgent = request.headers.get('user-agent')
+    const referer = request.headers.get('referer')
+    console.log(`🔍 Room ${roomId} requested by: ${userAgent?.slice(0, 50)}... from: ${referer}`)
 
     if (isNaN(roomId)) {
       return NextResponse.json(

@@ -1,68 +1,9 @@
+// /api/rooms/[id]/join/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
-import { query } from "@/lib/db";
+import { addPlayerToRoom, ApiError } from "@/lib/roomService"; // 导入新函数
 
-// GET /api/rooms/[id]/join - Check if room is joinable and get room info
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const roomId = parseInt(id);
-
-    if (isNaN(roomId)) {
-      return NextResponse.json(
-        { error: "Invalid room ID" },
-        { status: 400 }
-      );
-    }
-
-    // Get room details with player count
-    const rooms = await query(
-      `
-      SELECT 
-        r.room_id,
-        r.room_code,
-        r.status,
-        r.created_at,
-        r.owner_id,
-        u.username as owner_username,
-        COUNT(rp.user_id) as player_count
-      FROM rooms r
-      JOIN users u ON r.owner_id = u.user_id
-      LEFT JOIN room_players rp ON r.room_id = rp.room_id
-      WHERE r.room_id = ?
-      GROUP BY r.room_id, r.room_code, r.status, r.created_at, r.owner_id, u.username
-      `,
-      [roomId]
-    );
-
-    if (rooms.length === 0) {
-      return NextResponse.json(
-        { error: "Room not found" },
-        { status: 404 }
-      );
-    }
-
-    const room = rooms[0];
-    const MAX_PLAYERS = 4;
-
-    return NextResponse.json({
-      room: {
-        ...room,
-        joinable: room.status === 'waiting' && room.player_count < MAX_PLAYERS,
-        max_players: MAX_PLAYERS,
-        is_full: room.player_count >= MAX_PLAYERS
-      }
-    });
-  } catch (error) {
-    console.error("Check room joinable error:", error);
-    return NextResponse.json(
-      { error: "Failed to check room status" },
-      { status: 500 }
-    );
-  }
-}
+// ... 你的 GET 函数保持不变 ...
 
 // POST /api/rooms/[id]/join - Join room by room ID
 export async function POST(
@@ -72,7 +13,7 @@ export async function POST(
   try {
     const { id } = await params;
     const roomId = parseInt(id);
-    const { user_id } = await request.json();
+    const { user_id } = await request.json(); // 假设 user_id 来自 body
 
     if (isNaN(roomId)) {
       return NextResponse.json(
@@ -88,80 +29,27 @@ export async function POST(
       );
     }
 
-    // Check room capacity before joining
-    const MAX_PLAYERS = 4;
-    
-    // Get current player count
-    const roomCheck = await query(
-      `
-      SELECT 
-        r.status,
-        COUNT(rp.user_id) as current_players
-      FROM rooms r
-      LEFT JOIN room_players rp ON r.room_id = rp.room_id
-      WHERE r.room_id = ?
-      GROUP BY r.room_id, r.status
-      `,
-      [roomId]
-    );
+    // --- 删掉所有旧的验证 (check room capacity, check existing player) ---
+    // --- 删掉所有 fetch 代码 ---
 
-    if (roomCheck.length === 0) {
-      return NextResponse.json(
-        { error: "Room not found" },
-        { status: 404 }
-      );
-    }
+    // 唯一要做的事：调用你的核心逻辑函数
+    const newPlayer = await addPlayerToRoom(roomId, user_id);
 
-    const room = roomCheck[0];
+    // 成功！
+    return NextResponse.json(newPlayer, { status: 201 });
 
-    if (room.status !== 'waiting') {
-      return NextResponse.json(
-        { error: "Room is not accepting new players" },
-        { status: 400 }
-      );
-    }
-
-    if (room.current_players >= MAX_PLAYERS) {
-      return NextResponse.json(
-        { error: "Room is full (maximum 4 players)" },
-        { status: 400 }
-      );
-    }
-
-    // Check if user is already in the room
-    const existingPlayer = await query(
-      "SELECT id FROM room_players WHERE room_id = ? AND user_id = ?",
-      [roomId, user_id]
-    );
-
-    if (existingPlayer.length > 0) {
-      return NextResponse.json(
-        { error: "User is already in this room" },
-        { status: 400 }
-      );
-    }
-
-    // Use the room-players API logic here
-    const response = await fetch(`${request.nextUrl.origin}/api/room-players`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        room_id: roomId,
-        user_id
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json(data, { status: response.status });
-    }
-
-    return NextResponse.json(data, { status: 201 });
   } catch (error) {
     console.error("Join room by ID error:", error);
+
+    // 捕获我们自定义的 ApiError 并返回正确的状态码
+    if (error instanceof ApiError) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status }
+      );
+    }
+
+    // 捕获所有其他未知错误
     return NextResponse.json(
       { error: "Failed to join room" },
       { status: 500 }

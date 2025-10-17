@@ -108,7 +108,7 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-primary via-secondary to-accent flex items-start justify-center p-4 pt-16 relative overflow-hidden">
+    <div className="min-h-screen bg-authbackground flex items-center justify-center p-4 relative overflow-hidden">
       
       {/* Theme Toggle */}
       <div className="absolute top-4 right-4 z-50">
@@ -116,7 +116,7 @@ export default function AuthPage() {
       </div>
       
       {/* This is the wave background */}
-      {/* <div className="absolute bottom-0 left-0 w-full z-0">
+      {/* <div className="absolute bottom-0 left-0 w-full z-0"> 
         <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-24 md:h-32 lg:h-40">
           <path
             d="M0,60 C300,120 600,0 900,60 C1050,90 1150,30 1200,60 L1200,120 L0,120 Z"
@@ -136,7 +136,7 @@ export default function AuthPage() {
         </svg>
       </div> */}
 
-      <div className="w-full max-w-md relative z-20 mt-20">
+      <div className="w-full max-w-md relative z-20">
         {/* <div className="text-center mb-6 animate-fade-in">
           <h1 className="text-4xl font-bold text-foreground mb-2">GameHub</h1>
           <p className="text-muted-foreground">Join the ultimate multiplayer experience</p>
@@ -189,7 +189,7 @@ export default function AuthPage() {
           <TabsContent value="login" className="animate-slide-in-left">
             <Card className="border-border transform transition-all duration-500 hover:scale-[1.02] hover:shadow-xl">
               <CardHeader className="space-y-1">
-                <CardTitle className="text-2xl font-bold text-center animate-fade-in-delay">Welcome Back</CardTitle>
+                <CardTitle className="text-2xl font-bold text-center animate-fade-in-delay">Welcome To PyGame</CardTitle>
                 <CardDescription className="text-center animate-fade-in-delay-2">
                   Enter your credentials to access your account
                 </CardDescription>
