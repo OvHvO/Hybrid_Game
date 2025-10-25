@@ -4,10 +4,11 @@ import { query } from "@/lib/db"; // 假设你的 db lib 在这里
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const roomId = parseInt(params.id);
+    const { id } = await params
+    const roomId = parseInt(id);
     if (isNaN(roomId)) {
       return NextResponse.json({ error: "Invalid room ID" }, { status: 400 });
     }

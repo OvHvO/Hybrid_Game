@@ -131,6 +131,22 @@ export default function GameRoomPage() {
     }
   }, [room?.status, gameIsStarting])
 
+  useEffect(() => {
+    // Check if status becomes 'closed' (set by leave.ts)
+    if (room?.status === 'closed') {
+      console.log('🚪 Owner has left the room. Redirecting to dashboard.');
+      
+      // Immediately stop WebSocket/polling
+      disconnect(); 
+      
+      // Notify user
+      alert('The room owner has left. You will be redirected to the dashboard.');
+      
+      // Redirect to dashboard
+      router.push('/dashboard');
+    }
+  }, [room?.status, router, disconnect]);
+
   // Handle WebSocket errors (but not polling mode)
   useEffect(() => {
     if (wsError && !isPolling) {
@@ -150,7 +166,7 @@ export default function GameRoomPage() {
     disconnect()
     
     try {
-      const response = await fetch(`/api/rooms/${roomId}/leave`, {
+      const response = await fetch(`/api/room/${roomId}/leave`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
